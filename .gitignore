@@ -1,6 +1,9 @@
 # Gradle files
 .gradle
 
+# VS Code
+.vscode/
+
 # Output files
 /build/
 /*/build/
