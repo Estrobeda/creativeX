@@ -43,6 +43,15 @@ import java.util.Map;
 public interface PalettedPermutationsAtlasSource extends AtlasSource {
 
     /**
+     * Default separator used when joining texture and permutation names.
+     *
+     * @sincePackFormat 55
+     * @sinceMinecraft 1.21.5
+     * @since 1.8.4
+     */
+    String DEFAULT_SEPARATOR = "_";
+
+    /**
      * Gets the list of keys of the base textures. These textures will be used
      * to generate variants of them that have been modified by color palettes.
      *
@@ -82,5 +91,16 @@ public interface PalettedPermutationsAtlasSource extends AtlasSource {
      * @since 1.0.0
      */
     @NotNull @Unmodifiable Map<String, Key> permutations();
+
+    /**
+     * Gets the separator used when joining texture and permutation names to
+     * produce generated sprite names.
+     *
+     * @return The separator.
+     * @sincePackFormat 55
+     * @sinceMinecraft 1.21.5
+     * @since 1.8.4
+     */
+    @NotNull String separator();
 
 }

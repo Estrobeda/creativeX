@@ -41,18 +41,22 @@ final class PalettedPermutationsAtlasSourceImpl implements PalettedPermutationsA
     private final List<Key> textures;
     private final Key paletteKey;
     private final Map<String, Key> permutations;
+    private final String separator;
 
     PalettedPermutationsAtlasSourceImpl(
             final @NotNull List<Key> textures,
             final @NotNull Key paletteKey,
-            final @NotNull Map<String, Key> permutations
+            final @NotNull Map<String, Key> permutations,
+            final @NotNull String separator
     ) {
         requireNonNull(textures, "textures");
         requireNonNull(paletteKey, "paletteKey");
         requireNonNull(permutations, "permutations");
+        requireNonNull(separator, "separator");
         this.textures = MoreCollections.immutableListOf(textures);
         this.paletteKey = paletteKey;
         this.permutations = MoreCollections.immutableMapOf(permutations);
+        this.separator = separator;
     }
 
     @Override
@@ -71,11 +75,17 @@ final class PalettedPermutationsAtlasSourceImpl implements PalettedPermutationsA
     }
 
     @Override
+    public @NotNull String separator() {
+        return separator;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
                 ExaminableProperty.of("textures", textures),
                 ExaminableProperty.of("paletteKey", paletteKey),
-                ExaminableProperty.of("permutations", permutations)
+                ExaminableProperty.of("permutations", permutations),
+                ExaminableProperty.of("separator", separator)
         );
     }
 
@@ -91,7 +101,8 @@ final class PalettedPermutationsAtlasSourceImpl implements PalettedPermutationsA
         PalettedPermutationsAtlasSourceImpl that = (PalettedPermutationsAtlasSourceImpl) o;
         if (!textures.equals(that.textures)) return false;
         if (!paletteKey.equals(that.paletteKey)) return false;
-        return permutations.equals(that.permutations);
+        if (!permutations.equals(that.permutations)) return false;
+        return separator.equals(that.separator);
     }
 
     @Override
@@ -99,6 +110,7 @@ final class PalettedPermutationsAtlasSourceImpl implements PalettedPermutationsA
         int result = textures.hashCode();
         result = 31 * result + paletteKey.hashCode();
         result = 31 * result + permutations.hashCode();
+        result = 31 * result + separator.hashCode();
         return result;
     }
 

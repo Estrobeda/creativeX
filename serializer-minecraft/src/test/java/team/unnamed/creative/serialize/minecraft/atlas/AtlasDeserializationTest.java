@@ -35,7 +35,9 @@ import team.unnamed.creative.atlas.SingleAtlasSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -125,6 +127,40 @@ class AtlasDeserializationTest {
             expectedPermutations.put("diamond_darker", Key.key("trims/color_palettes/diamond_darker"));
             expectedPermutations.put("netherite_darker", Key.key("trims/color_palettes/netherite_darker"));
             assertEquals(expectedPermutations, permutations.permutations(), "Unexpected permutations for seventh source");
+            assertEquals(PalettedPermutationsAtlasSource.DEFAULT_SEPARATOR, permutations.separator(), "Unexpected default separator for seventh source");
         }
+    }
+
+    @Test
+    @DisplayName("Test serializing paletted permutations atlas source with custom separator")
+    void test_paletted_permutations_separator_serialization() throws IOException {
+        Map<String, Key> permutations = new LinkedHashMap<>();
+        permutations.put("red", Key.key("minecraft:palette/red"));
+        Atlas atlas = Atlas.builder()
+                .key(Key.key("minecraft:test"))
+                .sources(Collections.singletonList(AtlasSource.palettedPermutations(
+                        Collections.singletonList(Key.key("minecraft:item/example")),
+                        Key.key("minecraft:palette/key"),
+                        permutations,
+                        "-"
+                )))
+                .build();
+
+        assertEquals(
+                "{\"sources\":[{\"type\":\"paletted_permutations\",\"textures\":[\"item/example\"],\"palette_key\":\"palette/key\",\"permutations\":{\"red\":\"palette/red\"},\"separator\":\"-\"}]}",
+                AtlasSerializer.INSTANCE.serializeToJsonString(atlas)
+        );
+    }
+
+    @Test
+    @DisplayName("Test deserializing paletted permutations atlas source with custom separator")
+    void test_paletted_permutations_separator_deserialization() {
+        Atlas atlas = AtlasSerializer.INSTANCE.deserializeFromJson(
+                com.google.gson.JsonParser.parseString("{\"sources\":[{\"type\":\"minecraft:paletted_permutations\",\"textures\":[\"minecraft:item/example\"],\"palette_key\":\"minecraft:palette/key\",\"permutations\":{\"red\":\"minecraft:palette/red\"},\"separator\":\"-\"}]}"),
+                Key.key("minecraft:test")
+        );
+
+        PalettedPermutationsAtlasSource source = (PalettedPermutationsAtlasSource) atlas.sources().get(0);
+        assertEquals("-", source.separator());
     }
 }

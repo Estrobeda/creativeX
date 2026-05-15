@@ -180,6 +180,20 @@ public interface ItemBooleanProperty extends ItemProperty {
     }
 
     /**
+     * Returns an item condition that checks an item component predicate.
+     *
+     * @param predicate The component predicate type
+     * @param valueJson The raw JSON predicate value
+     * @return The item condition
+     * @since 1.8.4
+     * @sinceMinecraft 1.21.5
+     * @sincePackFormat 55
+     */
+    static @NotNull ComponentItemBooleanProperty component(final @NotNull String predicate, final @NotNull String valueJson) {
+        return new ComponentItemBooleanPropertyImpl(predicate, valueJson);
+    }
+
+    /**
      * Returns an item condition that checks whether the item has a specific type of component.
      *
      * @param component The component to check for

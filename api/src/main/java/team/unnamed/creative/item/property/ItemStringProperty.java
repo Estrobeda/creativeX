@@ -59,6 +59,22 @@ public interface ItemStringProperty extends ItemProperty {
     }
 
     /**
+     * Returns the <strong>component</strong> item string property, which evaluates to
+     * the value of the given component on the item, if present.
+     *
+     * <p>Possible values depend on the component type.</p>
+     *
+     * @param component The namespaced ID of the component type
+     * @return The component item string property
+     * @since 1.8.4
+     * @sinceMinecraft 1.21.5
+     * @sincePackFormat 55
+     */
+    static @NotNull ComponentItemStringProperty component(final @NotNull String component) {
+        return new ComponentItemStringPropertyImpl(component);
+    }
+
+    /**
      * Returns the <strong>charge type</strong> item string property, which evaluates to the
      * charge type stored in the {@code minecraft:charged_projectiles} component, if present.
      *
