@@ -35,9 +35,11 @@ import static java.util.Objects.requireNonNull;
 
 final class BannerSpecialRenderImpl implements BannerSpecialRender {
     private final DyeColor color;
+    private final Attachment attachment;
 
-    BannerSpecialRenderImpl(final @NotNull DyeColor color) {
+    BannerSpecialRenderImpl(final @NotNull DyeColor color, final @NotNull Attachment attachment) {
         this.color = requireNonNull(color, "color");
+        this.attachment = requireNonNull(attachment, "attachment");
     }
 
     @Override
@@ -46,9 +48,15 @@ final class BannerSpecialRenderImpl implements BannerSpecialRender {
     }
 
     @Override
+    public @NotNull Attachment attachment() {
+        return attachment;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
-                ExaminableProperty.of("color", color)
+                ExaminableProperty.of("color", color),
+                ExaminableProperty.of("attachment", attachment)
         );
     }
 
@@ -56,12 +64,12 @@ final class BannerSpecialRenderImpl implements BannerSpecialRender {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         BannerSpecialRenderImpl that = (BannerSpecialRenderImpl) o;
-        return color == that.color;
+        return color == that.color && attachment == that.attachment;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(color);
+        return Objects.hash(color, attachment);
     }
 
     @Override

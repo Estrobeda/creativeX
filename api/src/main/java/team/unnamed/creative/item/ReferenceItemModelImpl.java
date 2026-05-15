@@ -27,6 +27,7 @@ import net.kyori.adventure.key.Key;
 import net.kyori.examination.ExaminableProperty;
 import net.kyori.examination.string.StringExaminer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.unnamed.creative.item.tint.TintSource;
 
 import java.util.List;
@@ -38,10 +39,12 @@ import static java.util.Objects.requireNonNull;
 final class ReferenceItemModelImpl implements ReferenceItemModel {
     private final Key model;
     private final List<TintSource> tints;
+    private final ItemModelTransformation transformation;
 
-    ReferenceItemModelImpl(final @NotNull Key model, final @NotNull List<TintSource> tints) {
+    ReferenceItemModelImpl(final @NotNull Key model, final @NotNull List<TintSource> tints, final @Nullable ItemModelTransformation transformation) {
         this.model = requireNonNull(model, "model");
         this.tints = requireNonNull(tints, "tints");
+        this.transformation = transformation;
     }
 
     @Override
@@ -55,10 +58,16 @@ final class ReferenceItemModelImpl implements ReferenceItemModel {
     }
 
     @Override
+    public @Nullable ItemModelTransformation transformation() {
+        return transformation;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
             ExaminableProperty.of("model", model),
-            ExaminableProperty.of("tints", tints)
+            ExaminableProperty.of("tints", tints),
+            ExaminableProperty.of("transformation", transformation)
         );
     }
 
@@ -66,12 +75,12 @@ final class ReferenceItemModelImpl implements ReferenceItemModel {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ReferenceItemModelImpl that = (ReferenceItemModelImpl) o;
-        return model.equals(that.model) && tints.equals(that.tints);
+        return model.equals(that.model) && tints.equals(that.tints) && Objects.equals(transformation, that.transformation);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(model, tints);
+        return Objects.hash(model, tints, transformation);
     }
 
     @Override

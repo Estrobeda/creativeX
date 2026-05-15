@@ -49,7 +49,11 @@ public interface SpecialRender extends Examinable {
      * @return A banner special renderer
      */
     static @NotNull BannerSpecialRender banner(final @NotNull DyeColor color) {
-        return new BannerSpecialRenderImpl(color);
+        return banner(color, BannerSpecialRender.Attachment.GROUND);
+    }
+
+    static @NotNull BannerSpecialRender banner(final @NotNull DyeColor color, final @NotNull BannerSpecialRender.Attachment attachment) {
+        return new BannerSpecialRenderImpl(color, attachment);
     }
 
     /**
@@ -59,7 +63,11 @@ public interface SpecialRender extends Examinable {
      * @return A bed special renderer
      */
     static @NotNull BedSpecialRender bed(final @NotNull Key texture) {
-        return new BedSpecialRenderImpl(texture);
+        return bed(texture, null);
+    }
+
+    static @NotNull BedSpecialRender bed(final @NotNull Key texture, final @Nullable BedSpecialRender.Part part) {
+        return new BedSpecialRenderImpl(texture, part);
     }
 
     /**
@@ -72,6 +80,22 @@ public interface SpecialRender extends Examinable {
      */
     static @NotNull NoFieldSpecialRender conduit() {
         return NoFieldSpecialRenderImpl.CONDUIT;
+    }
+
+    static @NotNull NoFieldSpecialRender bell() {
+        return NoFieldSpecialRenderImpl.BELL;
+    }
+
+    static @NotNull BookSpecialRender book(final float openAngle, final float page1, final float page2) {
+        return new BookSpecialRenderImpl(openAngle, page1, page2);
+    }
+
+    static @NotNull BookSpecialRender book() {
+        return book(BookSpecialRender.DEFAULT_OPEN_ANGLE, BookSpecialRender.DEFAULT_PAGE, BookSpecialRender.DEFAULT_PAGE);
+    }
+
+    static @NotNull EndCubeSpecialRender endCube(final @NotNull EndCubeSpecialRender.Effect effect) {
+        return new EndCubeSpecialRenderImpl(effect);
     }
 
     /**
@@ -87,7 +111,11 @@ public interface SpecialRender extends Examinable {
      * @sincePackFormat 43
      */
     static @NotNull ChestSpecialRender chest(final @NotNull Key texture, final float openness) {
-        return new ChestSpecialRenderImpl(texture, openness);
+        return chest(texture, openness, ChestSpecialRender.Type.SINGLE);
+    }
+
+    static @NotNull ChestSpecialRender chest(final @NotNull Key texture, final float openness, final @NotNull ChestSpecialRender.Type type) {
+        return new ChestSpecialRenderImpl(texture, openness, type);
     }
 
     /**
@@ -157,18 +185,6 @@ public interface SpecialRender extends Examinable {
     }
 
     /**
-     * Returns a player head special renderer. Which renders a player head.
-     *
-     * @return A player head special renderer
-     * @since 1.8.4
-     * @sinceMinecraft 1.21.6
-     * @sincePackFormat 63
-     */
-    static @NotNull NoFieldSpecialRender playerHead() {
-        return NoFieldSpecialRenderImpl.PLAYER_HEAD;
-    }
-
-    /**
      * Returns a special renderer which renders a hanging sign with the given wood type and texture.
      *
      * @param woodType The wood type of the sign
@@ -179,7 +195,11 @@ public interface SpecialRender extends Examinable {
      * @sincePackFormat 43
      */
     static @NotNull SignSpecialRender hangingSign(final @NotNull WoodType woodType, final @Nullable Key texture) {
-        return new SignSpecialRenderImpl(true, woodType, texture);
+        return hangingSign(woodType, texture, SignSpecialRender.Attachment.CEILING_MIDDLE);
+    }
+
+    static @NotNull SignSpecialRender hangingSign(final @NotNull WoodType woodType, final @Nullable Key texture, final @NotNull SignSpecialRender.Attachment attachment) {
+        return new SignSpecialRenderImpl(true, woodType, texture, attachment);
     }
 
     /**
@@ -193,7 +213,11 @@ public interface SpecialRender extends Examinable {
      * @sincePackFormat 43
      */
     static @NotNull SignSpecialRender standingSign(final @NotNull WoodType woodType, final @Nullable Key texture) {
-        return new SignSpecialRenderImpl(false, woodType, texture);
+        return standingSign(woodType, texture, SignSpecialRender.Attachment.GROUND);
+    }
+
+    static @NotNull SignSpecialRender standingSign(final @NotNull WoodType woodType, final @Nullable Key texture, final @NotNull SignSpecialRender.Attachment attachment) {
+        return new SignSpecialRenderImpl(false, woodType, texture, attachment);
     }
 
     /**

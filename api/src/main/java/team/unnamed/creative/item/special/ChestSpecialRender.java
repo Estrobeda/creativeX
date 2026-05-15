@@ -58,4 +58,12 @@ public interface ChestSpecialRender extends SpecialRender {
      * @return The openness of the chest
      */
     float openness();
+
+    @NotNull Type type();
+
+    enum Type {
+        SINGLE,
+        LEFT,
+        RIGHT
+    }
 }

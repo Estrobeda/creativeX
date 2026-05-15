@@ -41,12 +41,14 @@ final class RangeDispatchItemModelImpl implements RangeDispatchItemModel {
     private final float scale;
     private final List<Entry> entries;
     private final ItemModel fallback;
+    private final ItemModelTransformation transformation;
 
-    RangeDispatchItemModelImpl(final @NotNull ItemNumericProperty property, final float scale, final @NotNull List<Entry> entries, final @Nullable ItemModel fallback) {
+    RangeDispatchItemModelImpl(final @NotNull ItemNumericProperty property, final float scale, final @NotNull List<Entry> entries, final @Nullable ItemModel fallback, final @Nullable ItemModelTransformation transformation) {
         this.property = requireNonNull(property, "property");
         this.scale = scale;
         this.entries = requireNonNull(entries, "entries");
         this.fallback = fallback;
+        this.transformation = transformation;
     }
 
     @Override
@@ -70,12 +72,18 @@ final class RangeDispatchItemModelImpl implements RangeDispatchItemModel {
     }
 
     @Override
+    public @Nullable ItemModelTransformation transformation() {
+        return transformation;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
             ExaminableProperty.of("property", property),
             ExaminableProperty.of("scale", scale),
             ExaminableProperty.of("entries", entries),
-            ExaminableProperty.of("fallback", fallback)
+            ExaminableProperty.of("fallback", fallback),
+            ExaminableProperty.of("transformation", transformation)
         );
     }
 
@@ -86,12 +94,13 @@ final class RangeDispatchItemModelImpl implements RangeDispatchItemModel {
         return Float.compare(that.scale, scale) == 0 &&
             property.equals(that.property) &&
             entries.equals(that.entries) &&
-            Objects.equals(fallback, that.fallback);
+            Objects.equals(fallback, that.fallback) &&
+            Objects.equals(transformation, that.transformation);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(property, scale, entries, fallback);
+        return Objects.hash(property, scale, entries, fallback, transformation);
     }
 
     @Override
@@ -177,7 +186,7 @@ final class RangeDispatchItemModelImpl implements RangeDispatchItemModel {
 
         @Override
         public @NotNull RangeDispatchItemModel build() {
-            return new RangeDispatchItemModelImpl(property, scale, entries, fallback);
+            return new RangeDispatchItemModelImpl(property, scale, entries, fallback, null);
         }
     }
 }

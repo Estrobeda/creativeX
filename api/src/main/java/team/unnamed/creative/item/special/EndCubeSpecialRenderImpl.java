@@ -21,56 +21,44 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package team.unnamed.creative.item;
+package team.unnamed.creative.item.special;
 
 import net.kyori.examination.ExaminableProperty;
 import net.kyori.examination.string.StringExaminer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
-final class CompositeItemModelImpl implements CompositeItemModel {
-    private final List<ItemModel> models;
-    private final ItemModelTransformation transformation;
+final class EndCubeSpecialRenderImpl implements EndCubeSpecialRender {
+    private final Effect effect;
 
-    CompositeItemModelImpl(final @NotNull List<ItemModel> models, final @Nullable ItemModelTransformation transformation) {
-        this.models = requireNonNull(models, "models");
-        this.transformation = transformation;
+    EndCubeSpecialRenderImpl(final @NotNull Effect effect) {
+        this.effect = requireNonNull(effect, "effect");
     }
 
     @Override
-    public @NotNull List<ItemModel> models() {
-        return models;
-    }
-
-    @Override
-    public @Nullable ItemModelTransformation transformation() {
-        return transformation;
+    public @NotNull Effect effect() {
+        return effect;
     }
 
     @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
-        return Stream.of(
-                ExaminableProperty.of("models", models),
-                ExaminableProperty.of("transformation", transformation)
-        );
+        return Stream.of(ExaminableProperty.of("effect", effect));
     }
 
     @Override
-    public boolean equals(final @Nullable Object o) {
+    public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        CompositeItemModelImpl that = (CompositeItemModelImpl) o;
-        return Objects.equals(models, that.models) && Objects.equals(transformation, that.transformation);
+        final EndCubeSpecialRenderImpl that = (EndCubeSpecialRenderImpl) o;
+        return effect == that.effect;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(models, transformation);
+        return Objects.hashCode(effect);
     }
 
     @Override

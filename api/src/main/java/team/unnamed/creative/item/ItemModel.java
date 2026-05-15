@@ -44,6 +44,18 @@ import java.util.List;
  */
 public interface ItemModel extends Examinable {
     /**
+     * Returns the transformation applied to this item model, if any.
+     *
+     * @return The item model transformation
+     * @sinceMinecraft 26.1
+     * @sincePackFormat 84
+     * @since 1.8.5
+     */
+    default @Nullable ItemModelTransformation transformation() {
+        return null;
+    }
+
+    /**
      * Creates a reference item model, which renders a plain model from the
      * {@code models} directory.
      *
@@ -55,7 +67,11 @@ public interface ItemModel extends Examinable {
      * @sincePackFormat 43
      */
     static @NotNull ReferenceItemModel reference(final @NotNull Key model, final @NotNull List<TintSource> tints) {
-        return new ReferenceItemModelImpl(model, tints);
+        return reference(model, tints, null);
+    }
+
+    static @NotNull ReferenceItemModel reference(final @NotNull Key model, final @NotNull List<TintSource> tints, final @Nullable ItemModelTransformation transformation) {
+        return new ReferenceItemModelImpl(model, tints, transformation);
     }
 
     /**
@@ -123,7 +139,11 @@ public interface ItemModel extends Examinable {
      * @sincePackFormat 43
      */
     static @NotNull CompositeItemModel composite(final @NotNull List<ItemModel> models) {
-        return new CompositeItemModelImpl(models);
+        return composite(models, null);
+    }
+
+    static @NotNull CompositeItemModel composite(final @NotNull List<ItemModel> models, final @Nullable ItemModelTransformation transformation) {
+        return new CompositeItemModelImpl(models, transformation);
     }
 
     /**
@@ -137,7 +157,7 @@ public interface ItemModel extends Examinable {
      * @sincePackFormat 43
      */
     static @NotNull CompositeItemModel composite(final @NotNull ItemModel @NotNull ... models) {
-        return new CompositeItemModelImpl(Arrays.asList(models));
+        return composite(Arrays.asList(models));
     }
 
     /**
@@ -152,7 +172,11 @@ public interface ItemModel extends Examinable {
      * @sincePackFormat 43
      */
     static @NotNull ConditionItemModel conditional(final @NotNull ItemBooleanProperty condition, final @NotNull ItemModel onTrue, final @NotNull ItemModel onFalse) {
-        return new ConditionItemModelImpl(condition, onTrue, onFalse);
+        return conditional(condition, onTrue, onFalse, null);
+    }
+
+    static @NotNull ConditionItemModel conditional(final @NotNull ItemBooleanProperty condition, final @NotNull ItemModel onTrue, final @NotNull ItemModel onFalse, final @Nullable ItemModelTransformation transformation) {
+        return new ConditionItemModelImpl(condition, onTrue, onFalse, transformation);
     }
 
     /**
@@ -181,7 +205,11 @@ public interface ItemModel extends Examinable {
      * @see SelectItemModel
      */
     static @NotNull SelectItemModel select(final @NotNull ItemStringProperty property, final @NotNull List<SelectItemModel.Case> cases, final @Nullable ItemModel fallback) {
-        return new SelectItemModelImpl(property, cases, fallback);
+        return select(property, cases, fallback, null);
+    }
+
+    static @NotNull SelectItemModel select(final @NotNull ItemStringProperty property, final @NotNull List<SelectItemModel.Case> cases, final @Nullable ItemModel fallback, final @Nullable ItemModelTransformation transformation) {
+        return new SelectItemModelImpl(property, cases, fallback, transformation);
     }
 
     /**
@@ -225,11 +253,19 @@ public interface ItemModel extends Examinable {
      * @sincePackFormat 43
      */
     static @NotNull SpecialItemModel special(final @NotNull SpecialRender render, final @NotNull Key base) {
-        return new SpecialItemModelImpl(render, base);
+        return special(render, base, null);
+    }
+
+    static @NotNull SpecialItemModel special(final @NotNull SpecialRender render, final @NotNull Key base, final @Nullable ItemModelTransformation transformation) {
+        return new SpecialItemModelImpl(render, base, transformation);
     }
 
     static @NotNull RangeDispatchItemModel rangeDispatch(final @NotNull ItemNumericProperty property, final float scale, final @NotNull List<RangeDispatchItemModel.Entry> entries, final @Nullable ItemModel fallback) {
-        return new RangeDispatchItemModelImpl(property, scale, entries, fallback);
+        return rangeDispatch(property, scale, entries, fallback, null);
+    }
+
+    static @NotNull RangeDispatchItemModel rangeDispatch(final @NotNull ItemNumericProperty property, final float scale, final @NotNull List<RangeDispatchItemModel.Entry> entries, final @Nullable ItemModel fallback, final @Nullable ItemModelTransformation transformation) {
+        return new RangeDispatchItemModelImpl(property, scale, entries, fallback, transformation);
     }
 
     static @NotNull RangeDispatchItemModel rangeDispatch(final @NotNull ItemNumericProperty property, final float scale, final @NotNull List<RangeDispatchItemModel.Entry> entries) {

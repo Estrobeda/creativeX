@@ -21,56 +21,62 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package team.unnamed.creative.item;
+package team.unnamed.creative.item.special;
 
 import net.kyori.examination.ExaminableProperty;
 import net.kyori.examination.string.StringExaminer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
+final class BookSpecialRenderImpl implements BookSpecialRender {
+    private final float openAngle;
+    private final float page1;
+    private final float page2;
 
-final class CompositeItemModelImpl implements CompositeItemModel {
-    private final List<ItemModel> models;
-    private final ItemModelTransformation transformation;
-
-    CompositeItemModelImpl(final @NotNull List<ItemModel> models, final @Nullable ItemModelTransformation transformation) {
-        this.models = requireNonNull(models, "models");
-        this.transformation = transformation;
+    BookSpecialRenderImpl(final float openAngle, final float page1, final float page2) {
+        this.openAngle = openAngle;
+        this.page1 = page1;
+        this.page2 = page2;
     }
 
     @Override
-    public @NotNull List<ItemModel> models() {
-        return models;
+    public float openAngle() {
+        return openAngle;
     }
 
     @Override
-    public @Nullable ItemModelTransformation transformation() {
-        return transformation;
+    public float page1() {
+        return page1;
+    }
+
+    @Override
+    public float page2() {
+        return page2;
     }
 
     @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
-                ExaminableProperty.of("models", models),
-                ExaminableProperty.of("transformation", transformation)
+                ExaminableProperty.of("openAngle", openAngle),
+                ExaminableProperty.of("page1", page1),
+                ExaminableProperty.of("page2", page2)
         );
     }
 
     @Override
-    public boolean equals(final @Nullable Object o) {
+    public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        CompositeItemModelImpl that = (CompositeItemModelImpl) o;
-        return Objects.equals(models, that.models) && Objects.equals(transformation, that.transformation);
+        final BookSpecialRenderImpl that = (BookSpecialRenderImpl) o;
+        return Float.compare(that.openAngle, openAngle) == 0
+                && Float.compare(that.page1, page1) == 0
+                && Float.compare(that.page2, page2) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(models, transformation);
+        return Objects.hash(openAngle, page1, page2);
     }
 
     @Override

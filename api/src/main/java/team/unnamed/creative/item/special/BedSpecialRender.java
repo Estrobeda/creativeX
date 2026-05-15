@@ -25,6 +25,7 @@ package team.unnamed.creative.item.special;
 
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a special render which renders a whole bed.
@@ -41,4 +42,20 @@ public interface BedSpecialRender extends SpecialRender {
      * @return The texture key
      */
     @NotNull Key texture();
+
+    /**
+     * Returns the bed part to render. Minecraft 26.1 renders one half per
+     * special model.
+     *
+     * @return The bed part, or null when unspecified
+     * @sinceMinecraft 26.1
+     * @sincePackFormat 84
+     * @since 1.8.5
+     */
+    @Nullable Part part();
+
+    enum Part {
+        HEAD,
+        FOOT
+    }
 }

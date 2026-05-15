@@ -25,18 +25,23 @@ package team.unnamed.creative.serialize.minecraft.item;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonWriter;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.unnamed.creative.base.CubeFace;
 import team.unnamed.creative.base.DyeColor;
 import team.unnamed.creative.base.HeadType;
+import team.unnamed.creative.base.Vector3Float;
 import team.unnamed.creative.base.WoodType;
 import team.unnamed.creative.item.*;
 import team.unnamed.creative.item.property.*;
 import team.unnamed.creative.item.special.BannerSpecialRender;
 import team.unnamed.creative.item.special.BedSpecialRender;
+import team.unnamed.creative.item.special.BookSpecialRender;
 import team.unnamed.creative.item.special.ChestSpecialRender;
+import team.unnamed.creative.item.special.EndCubeSpecialRender;
 import team.unnamed.creative.item.special.HeadSpecialRender;
 import team.unnamed.creative.item.special.NoFieldSpecialRender;
 import team.unnamed.creative.item.special.ShulkerBoxSpecialRender;
@@ -48,6 +53,7 @@ import team.unnamed.creative.item.tint.GrassTintSource;
 import team.unnamed.creative.item.tint.KeyedAndBackedTintSource;
 import team.unnamed.creative.item.tint.TintSource;
 import team.unnamed.creative.overlay.ResourceContainer;
+import team.unnamed.creative.serialize.minecraft.GsonUtil;
 import team.unnamed.creative.serialize.minecraft.ResourceCategoryImpl;
 import team.unnamed.creative.serialize.minecraft.base.KeySerializer;
 import team.unnamed.creative.serialize.minecraft.io.JsonResourceDeserializer;
@@ -81,7 +87,7 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
         } else if (model instanceof ReferenceItemModel) {
             writeReference(writer, (ReferenceItemModel) model);
         } else if (model instanceof SpecialItemModel) {
-            writeSpecial(writer, (SpecialItemModel) model);
+            writeSpecial(writer, (SpecialItemModel) model, targetPackFormat);
         } else if (model instanceof CompositeItemModel) {
             writeComposite(writer, (CompositeItemModel) model, targetPackFormat);
         } else if (model instanceof ConditionItemModel) {
@@ -95,6 +101,7 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
         } else {
             throw new IllegalArgumentException("Unknown item model type: " + model.getClass());
         }
+        writeTransformation(writer, model.transformation());
         writer.endObject();
     }
 
@@ -228,10 +235,10 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
                     throw new IllegalArgumentException("Unknown tint source type: " + type);
             }
         }
-        return ItemModel.reference(model, tints);
+        return ItemModel.reference(model, tints, readTransformation(node));
     }
 
-    private void writeSpecial(final @NotNull JsonWriter writer, final @NotNull SpecialItemModel model) throws IOException {
+    private void writeSpecial(final @NotNull JsonWriter writer, final @NotNull SpecialItemModel model, final int targetPackFormat) throws IOException {
         writer.name("type").value("special");
         writer.name("model").beginObject();
         final SpecialRender render = model.render();
@@ -239,10 +246,16 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
             final BannerSpecialRender bannerRender = (BannerSpecialRender) render;
             writer.name("type").value("banner");
             writer.name("color").value(bannerRender.color().name().toLowerCase());
+            if (bannerRender.attachment() != BannerSpecialRender.Attachment.GROUND) {
+                writer.name("attachment").value(bannerRender.attachment().name().toLowerCase());
+            }
         } else if (render instanceof BedSpecialRender) {
             final BedSpecialRender bedRender = (BedSpecialRender) render;
             writer.name("type").value("bed");
             writer.name("texture").value(KeySerializer.toString(bedRender.texture()));
+            if (bedRender.part() != null) {
+                writer.name("part").value(bedRender.part().name().toLowerCase());
+            }
         } else if (render instanceof ChestSpecialRender) {
             final ChestSpecialRender chestRender = (ChestSpecialRender) render;
             writer.name("type").value("chest");
@@ -251,6 +264,25 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
             if (openness != ChestSpecialRender.DEFAULT_OPENNESS) {
                 writer.name("openness").value(openness);
             }
+            if (chestRender.type() != ChestSpecialRender.Type.SINGLE) {
+                writer.name("chest_type").value(chestRender.type().name().toLowerCase());
+            }
+        } else if (render instanceof BookSpecialRender) {
+            final BookSpecialRender bookRender = (BookSpecialRender) render;
+            writer.name("type").value("book");
+            if (bookRender.openAngle() != BookSpecialRender.DEFAULT_OPEN_ANGLE) {
+                writer.name("open_angle").value(bookRender.openAngle());
+            }
+            if (bookRender.page1() != BookSpecialRender.DEFAULT_PAGE) {
+                writer.name("page1").value(bookRender.page1());
+            }
+            if (bookRender.page2() != BookSpecialRender.DEFAULT_PAGE) {
+                writer.name("page2").value(bookRender.page2());
+            }
+        } else if (render instanceof EndCubeSpecialRender) {
+            final EndCubeSpecialRender endCubeRender = (EndCubeSpecialRender) render;
+            writer.name("type").value("end_cube");
+            writer.name("effect").value(endCubeRender.effect().name().toLowerCase());
         } else if (render instanceof SignSpecialRender) { // covers both hanging & standing sign types
             final SignSpecialRender signRender = (SignSpecialRender) render;
             writer.name("type").value(signRender.hanging() ? "hanging_sign" : "standing_sign");
@@ -258,6 +290,12 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
             final Key texture = signRender.texture();
             if (texture != null) {
                 writer.name("texture").value(KeySerializer.toString(texture));
+            }
+            final SignSpecialRender.Attachment defaultAttachment = signRender.hanging()
+                    ? SignSpecialRender.Attachment.CEILING_MIDDLE
+                    : SignSpecialRender.Attachment.GROUND;
+            if (signRender.attachment() != defaultAttachment) {
+                writer.name("attachment").value(signRender.attachment().name().toLowerCase());
             }
         } else if (render instanceof HeadSpecialRender) {
             final HeadSpecialRender headRender = (HeadSpecialRender) render;
@@ -284,7 +322,7 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
             }
 
             final CubeFace orientation = shulkerBoxRender.orientation();
-            if (orientation != ShulkerBoxSpecialRender.DEFAULT_ORIENTATION) {
+            if (targetPackFormat < 83 && orientation != ShulkerBoxSpecialRender.DEFAULT_ORIENTATION) {
                 writer.name("orientation").value(orientation.name().toLowerCase());
             }
         } else if (render instanceof NoFieldSpecialRender) {
@@ -306,17 +344,36 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
         }
         switch (type.value()) {
             case "banner":
-                render = SpecialRender.banner(DyeColor.valueOf(modelNode.get("color").getAsString().toUpperCase()));
+                final BannerSpecialRender.Attachment bannerAttachment = modelNode.has("attachment")
+                        ? BannerSpecialRender.Attachment.valueOf(modelNode.get("attachment").getAsString().toUpperCase())
+                        : BannerSpecialRender.Attachment.GROUND;
+                render = SpecialRender.banner(DyeColor.valueOf(modelNode.get("color").getAsString().toUpperCase()), bannerAttachment);
                 break;
             case "bed":
-                render = SpecialRender.bed(Key.key(modelNode.get("texture").getAsString()));
+                final BedSpecialRender.Part bedPart = modelNode.has("part")
+                        ? BedSpecialRender.Part.valueOf(modelNode.get("part").getAsString().toUpperCase())
+                        : null;
+                render = SpecialRender.bed(Key.key(modelNode.get("texture").getAsString()), bedPart);
                 break;
             case "chest":
                 final Key chestTexture = Key.key(modelNode.get("texture").getAsString());
                 final float openness = modelNode.has("openness")
                         ? modelNode.get("openness").getAsFloat()
                         : ChestSpecialRender.DEFAULT_OPENNESS;
-                render = SpecialRender.chest(chestTexture, openness);
+                final ChestSpecialRender.Type chestType = modelNode.has("chest_type")
+                        ? ChestSpecialRender.Type.valueOf(modelNode.get("chest_type").getAsString().toUpperCase())
+                        : ChestSpecialRender.Type.SINGLE;
+                render = SpecialRender.chest(chestTexture, openness, chestType);
+                break;
+            case "book":
+                render = SpecialRender.book(
+                        modelNode.has("open_angle") ? modelNode.get("open_angle").getAsFloat() : BookSpecialRender.DEFAULT_OPEN_ANGLE,
+                        modelNode.has("page1") ? modelNode.get("page1").getAsFloat() : BookSpecialRender.DEFAULT_PAGE,
+                        modelNode.has("page2") ? modelNode.get("page2").getAsFloat() : BookSpecialRender.DEFAULT_PAGE
+                );
+                break;
+            case "end_cube":
+                render = SpecialRender.endCube(EndCubeSpecialRender.Effect.valueOf(modelNode.get("effect").getAsString().toUpperCase()));
                 break;
             case "hanging_sign":
             case "standing_sign":
@@ -325,7 +382,13 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
                 final Key signTexture = modelNode.has("texture")
                         ? Key.key(modelNode.get("texture").getAsString())
                         : null;
-                render = hanging ? SpecialRender.hangingSign(woodType, signTexture) : SpecialRender.standingSign(woodType, signTexture);
+                final SignSpecialRender.Attachment defaultAttachment = hanging
+                        ? SignSpecialRender.Attachment.CEILING_MIDDLE
+                        : SignSpecialRender.Attachment.GROUND;
+                final SignSpecialRender.Attachment attachment = modelNode.has("attachment")
+                        ? SignSpecialRender.Attachment.valueOf(modelNode.get("attachment").getAsString().toUpperCase())
+                        : defaultAttachment;
+                render = hanging ? SpecialRender.hangingSign(woodType, signTexture, attachment) : SpecialRender.standingSign(woodType, signTexture, attachment);
                 break;
             case "head":
                 final HeadType kind = HeadType.valueOf(modelNode.get("kind").getAsString().toUpperCase());
@@ -350,6 +413,9 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
             case "conduit":
                 render = SpecialRender.conduit();
                 break;
+            case "bell":
+                render = SpecialRender.bell();
+                break;
             case "decorated_pot":
                 render = SpecialRender.decoratedPot();
                 break;
@@ -365,7 +431,7 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
             default:
                 throw new IllegalArgumentException("Unknown special render type: " + type);
         }
-        return ItemModel.special(render, Key.key(node.get("base").getAsString()));
+        return ItemModel.special(render, Key.key(node.get("base").getAsString()), readTransformation(node));
     }
 
     private void writeComposite(final @NotNull JsonWriter writer, final @NotNull CompositeItemModel model, final int targetPackFormat) throws IOException {
@@ -382,7 +448,7 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
         for (JsonElement childElement : node.getAsJsonArray("models")) {
             models.add(deserializeItemModel(childElement));
         }
-        return ItemModel.composite(models);
+        return ItemModel.composite(models, readTransformation(node));
     }
 
     private void writeCondition(final @NotNull JsonWriter writer, final @NotNull ConditionItemModel model, final int targetPackFormat) throws IOException {
@@ -394,6 +460,12 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
             if (index != CustomModelDataItemBooleanProperty.DEFAULT_INDEX) {
                 writer.name("index").value(index);
             }
+        } else if (condition instanceof ComponentItemBooleanProperty) {
+            final ComponentItemBooleanProperty component = (ComponentItemBooleanProperty) condition;
+            writer.name("property").value("component");
+            writer.name("predicate").value(component.predicate());
+            writer.name("value");
+            Streams.write(GsonUtil.parseString(component.valueJson()), writer);
         } else if (condition instanceof HasComponentItemBooleanProperty) {
             final HasComponentItemBooleanProperty hasComponent = (HasComponentItemBooleanProperty) condition;
             writer.name("property").value("has_component");
@@ -429,6 +501,12 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
                         ? node.get("index").getAsInt()
                         : CustomModelDataItemBooleanProperty.DEFAULT_INDEX;
                 condition = ItemBooleanProperty.customModelData(index);
+                break;
+            case "component":
+                condition = ItemBooleanProperty.component(
+                        node.get("predicate").getAsString(),
+                        node.get("value").toString()
+                );
                 break;
             case "has_component":
                 final String component = node.get("component").getAsString();
@@ -473,7 +551,8 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
         return ItemModel.conditional(
                 condition,
                 deserializeItemModel(node.get("on_true")),
-                deserializeItemModel(node.get("on_false"))
+                deserializeItemModel(node.get("on_false")),
+                readTransformation(node)
         );
     }
 
@@ -484,6 +563,9 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
         if (property instanceof BlockStateItemStringProperty) {
             writer.name("property").value("block_state");
             writer.name("block_state_property").value(((BlockStateItemStringProperty) property).property());
+        } else if (property instanceof ComponentItemStringProperty) {
+            writer.name("property").value("component");
+            writer.name("component").value(((ComponentItemStringProperty) property).component());
         } else if (property instanceof CustomModelDataItemStringProperty) {
             writer.name("property").value("custom_model_data");
             final int index = ((CustomModelDataItemStringProperty) property).index();
@@ -502,7 +584,7 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
 
             final String timezone = localTimeProperty.timezone();
             if (timezone != null) {
-                writer.name("timezone").value(timezone);
+                writer.name("time_zone").value(timezone);
             }
         } else if (property instanceof NoFieldItemStringProperty) {
             writer.name("property").value(KeySerializer.toString(((NoFieldItemStringProperty) property).key()));
@@ -547,6 +629,9 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
             case "block_state":
                 property = ItemStringProperty.blockState(node.get("block_state_property").getAsString());
                 break;
+            case "component":
+                property = ItemStringProperty.component(node.get("component").getAsString());
+                break;
             case "custom_model_data":
                 final int index = node.has("index")
                         ? node.get("index").getAsInt()
@@ -558,9 +643,14 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
                 final String locale = node.has("locale")
                         ? node.get("locale").getAsString()
                         : LocalTimeItemStringProperty.DEFAULT_LOCALE;
-                final String timezone = node.has("timezone")
-                        ? node.get("timezone").getAsString()
-                        : null;
+                final String timezone;
+                if (node.has("time_zone")) {
+                    timezone = node.get("time_zone").getAsString();
+                } else if (node.has("timezone")) {
+                    timezone = node.get("timezone").getAsString();
+                } else {
+                    timezone = null;
+                }
                 property = ItemStringProperty.localTime(locale, timezone, pattern);
                 break;
             case "charge_type":
@@ -608,7 +698,7 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
                 ? deserializeItemModel(node.get("fallback"))
                 : null;
 
-        return ItemModel.select(property, cases, fallback);
+        return ItemModel.select(property, cases, fallback, readTransformation(node));
     }
 
     private void writeRangeDispatch(final @NotNull JsonWriter writer, final @NotNull RangeDispatchItemModel model, final int targetPackFormat) throws IOException {
@@ -771,6 +861,84 @@ public final class ItemSerializer implements JsonResourceSerializer<Item>, JsonR
                 ? deserializeItemModel(node.get("fallback"))
                 : null;
 
-        return ItemModel.rangeDispatch(property, scale, entries, fallback);
+        return ItemModel.rangeDispatch(property, scale, entries, fallback, readTransformation(node));
+    }
+
+    private static void writeTransformation(final @NotNull JsonWriter writer, final @Nullable ItemModelTransformation transformation) throws IOException {
+        if (transformation == null) {
+            return;
+        }
+        writer.name("transformation");
+        final float[] matrix = transformation.matrix();
+        if (matrix != null) {
+            writer.beginArray();
+            for (final float value : matrix) {
+                writer.value(value);
+            }
+            writer.endArray();
+            return;
+        }
+        writer.beginObject();
+        final Vector3Float translation = transformation.translation();
+        if (translation != null) {
+            writer.name("translation");
+            GsonUtil.writeVector3Float(writer, translation);
+        }
+        final Vector3Float scale = transformation.scale();
+        if (scale != null) {
+            writer.name("scale");
+            GsonUtil.writeVector3Float(writer, scale);
+        }
+        final float[] leftRotation = transformation.leftRotation();
+        if (leftRotation != null) {
+            writer.name("left_rotation");
+            writeFloatArray(writer, leftRotation);
+        }
+        final float[] rightRotation = transformation.rightRotation();
+        if (rightRotation != null) {
+            writer.name("right_rotation");
+            writeFloatArray(writer, rightRotation);
+        }
+        writer.endObject();
+    }
+
+    private static @Nullable ItemModelTransformation readTransformation(final @NotNull JsonObject node) {
+        if (!node.has("transformation")) {
+            return null;
+        }
+        final JsonElement element = node.get("transformation");
+        if (element.isJsonArray()) {
+            return ItemModelTransformation.matrix(readFloatArray(element, 16));
+        }
+        final JsonObject object = element.getAsJsonObject();
+        return ItemModelTransformation.decomposed(
+                object.has("translation") ? GsonUtil.readVector3Float(object.get("translation")) : null,
+                object.has("scale") ? GsonUtil.readVector3Float(object.get("scale")) : null,
+                object.has("left_rotation") ? readFloatArray(object.get("left_rotation"), 4) : null,
+                object.has("right_rotation") ? readFloatArray(object.get("right_rotation"), 4) : null
+        );
+    }
+
+    private static void writeFloatArray(final @NotNull JsonWriter writer, final float @NotNull [] values) throws IOException {
+        writer.beginArray();
+        for (final float value : values) {
+            writer.value(value);
+        }
+        writer.endArray();
+    }
+
+    private static float[] readFloatArray(final @NotNull JsonElement element, final int expectedLength) {
+        final float[] values = new float[expectedLength];
+        int index = 0;
+        for (final JsonElement value : element.getAsJsonArray()) {
+            if (index == expectedLength) {
+                throw new IllegalArgumentException("Expected " + expectedLength + " values");
+            }
+            values[index++] = (float) value.getAsDouble();
+        }
+        if (index != expectedLength) {
+            throw new IllegalArgumentException("Expected " + expectedLength + " values");
+        }
+        return values;
     }
 }

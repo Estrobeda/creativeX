@@ -27,6 +27,7 @@ import net.kyori.adventure.key.Key;
 import net.kyori.examination.ExaminableProperty;
 import net.kyori.examination.string.StringExaminer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.unnamed.creative.item.special.SpecialRender;
 
 import java.util.Objects;
@@ -37,10 +38,12 @@ import static java.util.Objects.requireNonNull;
 final class SpecialItemModelImpl implements SpecialItemModel {
     private final SpecialRender render;
     private final Key base;
+    private final ItemModelTransformation transformation;
 
-    SpecialItemModelImpl(final @NotNull SpecialRender render, final @NotNull Key base) {
+    SpecialItemModelImpl(final @NotNull SpecialRender render, final @NotNull Key base, final @Nullable ItemModelTransformation transformation) {
         this.render = requireNonNull(render, "render");
         this.base = requireNonNull(base, "base");
+        this.transformation = transformation;
     }
 
     @Override
@@ -54,10 +57,16 @@ final class SpecialItemModelImpl implements SpecialItemModel {
     }
 
     @Override
+    public @Nullable ItemModelTransformation transformation() {
+        return transformation;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
             ExaminableProperty.of("base", base),
-            ExaminableProperty.of("render", render)
+            ExaminableProperty.of("render", render),
+            ExaminableProperty.of("transformation", transformation)
         );
     }
 
@@ -65,12 +74,12 @@ final class SpecialItemModelImpl implements SpecialItemModel {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         SpecialItemModelImpl that = (SpecialItemModelImpl) o;
-        return render.equals(that.render) && base.equals(that.base);
+        return render.equals(that.render) && base.equals(that.base) && Objects.equals(transformation, that.transformation);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(render, base);
+        return Objects.hash(render, base, transformation);
     }
 
     @Override

@@ -36,10 +36,12 @@ import static java.util.Objects.requireNonNull;
 final class ChestSpecialRenderImpl implements ChestSpecialRender {
     private final Key texture;
     private final float openness;
+    private final Type type;
 
-    ChestSpecialRenderImpl(final @NotNull Key texture, final float openness) {
+    ChestSpecialRenderImpl(final @NotNull Key texture, final float openness, final @NotNull Type type) {
         this.texture = requireNonNull(texture, "texture");
         this.openness = openness;
+        this.type = requireNonNull(type, "type");
 
         if (openness > 1 || openness < 0) {
             throw new IllegalArgumentException("Openness must be between 0 and 1, got: " + openness);
@@ -57,10 +59,16 @@ final class ChestSpecialRenderImpl implements ChestSpecialRender {
     }
 
     @Override
+    public @NotNull Type type() {
+        return type;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
                 ExaminableProperty.of("texture", texture),
-                ExaminableProperty.of("openness", openness)
+                ExaminableProperty.of("openness", openness),
+                ExaminableProperty.of("type", type)
         );
     }
 
@@ -68,12 +76,12 @@ final class ChestSpecialRenderImpl implements ChestSpecialRender {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ChestSpecialRenderImpl that = (ChestSpecialRenderImpl) o;
-        return Float.compare(that.openness, openness) == 0 && texture.equals(that.texture);
+        return Float.compare(that.openness, openness) == 0 && texture.equals(that.texture) && type == that.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(texture, openness);
+        return Objects.hash(texture, openness, type);
     }
 
     @Override

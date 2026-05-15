@@ -23,48 +23,13 @@
  */
 package team.unnamed.creative.item.special;
 
-import net.kyori.adventure.key.Key;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import team.unnamed.creative.base.WoodType;
+public interface BookSpecialRender extends SpecialRender {
+    float DEFAULT_OPEN_ANGLE = 0F;
+    float DEFAULT_PAGE = 0F;
 
-/**
- * Represents a special render for signs
- *
- * @since 1.8.0
- * @sinceMinecraft 1.21.4
- * @sincePackFormat 43
- */
-public interface SignSpecialRender extends SpecialRender {
-    /**
-     * Determines whether the sign is hanging or standing.
-     *
-     * @return True if the sign is hanging, false otherwise
-     */
-    boolean hanging();
+    float openAngle();
 
-    /**
-     * Returns the wood type of the hanging sign
-     *
-     * @return The wood type
-     */
-    @NotNull WoodType woodType();
+    float page1();
 
-    /**
-     * Returns the key to the texture to use, without {@code textures/entity/signs/hanging}
-     * prefix and {@code .png} suffix. If set to null, it will be derived from
-     * the {@link #woodType()}.
-     *
-     * @return The texture key
-     */
-    @Nullable Key texture();
-
-    @NotNull Attachment attachment();
-
-    enum Attachment {
-        GROUND,
-        WALL,
-        CEILING,
-        CEILING_MIDDLE
-    }
+    float page2();
 }

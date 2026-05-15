@@ -42,4 +42,11 @@ public interface BannerSpecialRender extends SpecialRender {
      * @return The color of the Banner base
      */
     @NotNull DyeColor color();
+
+    @NotNull Attachment attachment();
+
+    enum Attachment {
+        GROUND,
+        WALL
+    }
 }

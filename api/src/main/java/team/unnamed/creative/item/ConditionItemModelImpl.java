@@ -38,11 +38,13 @@ final class ConditionItemModelImpl implements ConditionItemModel {
     private final ItemBooleanProperty condition;
     private final ItemModel onTrue;
     private final ItemModel onFalse;
+    private final ItemModelTransformation transformation;
 
-    ConditionItemModelImpl(final @NotNull ItemBooleanProperty condition, final @NotNull ItemModel onTrue, final @NotNull ItemModel onFalse) {
+    ConditionItemModelImpl(final @NotNull ItemBooleanProperty condition, final @NotNull ItemModel onTrue, final @NotNull ItemModel onFalse, final @Nullable ItemModelTransformation transformation) {
         this.condition = requireNonNull(condition, "condition");
         this.onTrue = requireNonNull(onTrue, "onTrue");
         this.onFalse = requireNonNull(onFalse, "onFalse");
+        this.transformation = transformation;
     }
 
     @Override
@@ -61,11 +63,17 @@ final class ConditionItemModelImpl implements ConditionItemModel {
     }
 
     @Override
+    public @Nullable ItemModelTransformation transformation() {
+        return transformation;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
             ExaminableProperty.of("condition", condition),
             ExaminableProperty.of("onTrue", onTrue),
-            ExaminableProperty.of("onFalse", onFalse)
+            ExaminableProperty.of("onFalse", onFalse),
+            ExaminableProperty.of("transformation", transformation)
         );
     }
 
@@ -73,12 +81,12 @@ final class ConditionItemModelImpl implements ConditionItemModel {
     public boolean equals(final @Nullable Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         final ConditionItemModelImpl that = (ConditionItemModelImpl) o;
-        return condition.equals(that.condition) && onTrue.equals(that.onTrue) && onFalse.equals(that.onFalse);
+        return condition.equals(that.condition) && onTrue.equals(that.onTrue) && onFalse.equals(that.onFalse) && Objects.equals(transformation, that.transformation);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(condition, onTrue, onFalse);
+        return Objects.hash(condition, onTrue, onFalse, transformation);
     }
 
     @Override

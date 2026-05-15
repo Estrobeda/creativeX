@@ -39,11 +39,13 @@ final class SignSpecialRenderImpl implements SignSpecialRender {
     private final boolean hanging;
     private final WoodType woodType;
     private final Key texture;
+    private final Attachment attachment;
 
-    SignSpecialRenderImpl(final boolean hanging, final @NotNull WoodType woodType, final @Nullable Key texture) {
+    SignSpecialRenderImpl(final boolean hanging, final @NotNull WoodType woodType, final @Nullable Key texture, final @NotNull Attachment attachment) {
         this.hanging = hanging;
         this.woodType = requireNonNull(woodType, "woodType");
         this.texture = texture;
+        this.attachment = requireNonNull(attachment, "attachment");
     }
 
     @Override
@@ -62,11 +64,17 @@ final class SignSpecialRenderImpl implements SignSpecialRender {
     }
 
     @Override
+    public @NotNull Attachment attachment() {
+        return attachment;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
             ExaminableProperty.of("hanging", hanging),
             ExaminableProperty.of("woodType", woodType),
-            ExaminableProperty.of("texture", texture)
+            ExaminableProperty.of("texture", texture),
+            ExaminableProperty.of("attachment", attachment)
         );
     }
 
@@ -76,12 +84,13 @@ final class SignSpecialRenderImpl implements SignSpecialRender {
         SignSpecialRenderImpl that = (SignSpecialRenderImpl) o;
         return hanging == that.hanging &&
             woodType == that.woodType &&
-            Objects.equals(texture, that.texture);
+            Objects.equals(texture, that.texture) &&
+            attachment == that.attachment;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hanging, woodType, texture);
+        return Objects.hash(hanging, woodType, texture, attachment);
     }
 
     @Override

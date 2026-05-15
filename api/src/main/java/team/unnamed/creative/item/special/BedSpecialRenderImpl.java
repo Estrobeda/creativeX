@@ -27,6 +27,7 @@ import net.kyori.adventure.key.Key;
 import net.kyori.examination.ExaminableProperty;
 import net.kyori.examination.string.StringExaminer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -35,9 +36,11 @@ import static java.util.Objects.requireNonNull;
 
 final class BedSpecialRenderImpl implements BedSpecialRender {
     private final Key texture;
+    private final Part part;
 
-    BedSpecialRenderImpl(final @NotNull Key texture) {
+    BedSpecialRenderImpl(final @NotNull Key texture, final @Nullable Part part) {
         this.texture = requireNonNull(texture, "texture");
+        this.part = part;
     }
 
     @Override
@@ -46,9 +49,15 @@ final class BedSpecialRenderImpl implements BedSpecialRender {
     }
 
     @Override
+    public @Nullable Part part() {
+        return part;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
-                ExaminableProperty.of("texture", texture)
+                ExaminableProperty.of("texture", texture),
+                ExaminableProperty.of("part", part)
         );
     }
 
@@ -56,12 +65,12 @@ final class BedSpecialRenderImpl implements BedSpecialRender {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         BedSpecialRenderImpl that = (BedSpecialRenderImpl) o;
-        return texture.equals(that.texture);
+        return texture.equals(that.texture) && part == that.part;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(texture);
+        return Objects.hash(texture, part);
     }
 
     @Override

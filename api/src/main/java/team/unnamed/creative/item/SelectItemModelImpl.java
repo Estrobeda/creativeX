@@ -40,11 +40,13 @@ final class SelectItemModelImpl implements SelectItemModel {
     private final ItemStringProperty property;
     private final List<Case> cases;
     private final ItemModel fallback;
+    private final ItemModelTransformation transformation;
 
-    SelectItemModelImpl(final @NotNull ItemStringProperty property, final @NotNull List<Case> cases, final @Nullable ItemModel fallback) {
+    SelectItemModelImpl(final @NotNull ItemStringProperty property, final @NotNull List<Case> cases, final @Nullable ItemModel fallback, final @Nullable ItemModelTransformation transformation) {
         this.property = requireNonNull(property, "property");
         this.cases = requireNonNull(cases, "cases");
         this.fallback = fallback;
+        this.transformation = transformation;
     }
 
     @Override
@@ -63,11 +65,17 @@ final class SelectItemModelImpl implements SelectItemModel {
     }
 
     @Override
+    public @Nullable ItemModelTransformation transformation() {
+        return transformation;
+    }
+
+    @Override
     public @NotNull Stream<? extends ExaminableProperty> examinableProperties() {
         return Stream.of(
             ExaminableProperty.of("property", property),
             ExaminableProperty.of("cases", cases),
-            ExaminableProperty.of("fallback", fallback)
+            ExaminableProperty.of("fallback", fallback),
+            ExaminableProperty.of("transformation", transformation)
         );
     }
 
@@ -75,12 +83,12 @@ final class SelectItemModelImpl implements SelectItemModel {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         SelectItemModelImpl that = (SelectItemModelImpl) o;
-        return property.equals(that.property) && cases.equals(that.cases) && Objects.equals(fallback, that.fallback);
+        return property.equals(that.property) && cases.equals(that.cases) && Objects.equals(fallback, that.fallback) && Objects.equals(transformation, that.transformation);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(property, cases, fallback);
+        return Objects.hash(property, cases, fallback, transformation);
     }
 
     @Override
@@ -159,7 +167,7 @@ final class SelectItemModelImpl implements SelectItemModel {
 
         @Override
         public @NotNull SelectItemModel build() {
-            return new SelectItemModelImpl(requireNonNull(property, "property"), cases, fallback);
+            return new SelectItemModelImpl(requireNonNull(property, "property"), cases, fallback, null);
         }
     }
 }
