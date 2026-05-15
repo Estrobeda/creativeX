@@ -61,7 +61,9 @@ final class OverlaysMetaCodec implements MetadataPartCodec<OverlaysMeta> {
         final List<OverlayEntry> overlays = new ArrayList<>();
         for (final JsonElement entryNode : entries) {
             final JsonObject entryObject = entryNode.getAsJsonObject();
-            final PackFormat formats = PackFormatSerializer.deserialize(entryObject.get("formats"));
+            final PackFormat formats = entryObject.has("min_format") && entryObject.has("max_format")
+                    ? PackFormatSerializer.deserializeNewFormat(entryObject)
+                    : PackFormatSerializer.deserialize(entryObject.get("formats"));
             @Subst("dir") final String directory = entryObject.get("directory").getAsString();
             overlays.add(OverlayEntry.of(formats, directory));
         }
@@ -73,18 +75,22 @@ final class OverlaysMetaCodec implements MetadataPartCodec<OverlaysMeta> {
         writer.beginObject();
         writer.name("entries");
         writer.beginArray();
+        final boolean writeLegacyFormats = overlays.entries().stream()
+                .anyMatch(overlay -> overlay.formats().min() < 65);
         for (final OverlayEntry overlay : overlays.entries()) {
             writer.beginObject();
-            writer.name("formats");
-            PackFormatSerializer.serialize(overlay.formats(), writer);
+            if (writeLegacyFormats) {
+                writer.name("formats");
+                PackFormatSerializer.serialize(overlay.formats(), writer);
+            }
             writer.name("directory").value(overlay.directory());
 
             // Formats higher than 64 are required to have min_format and max_format fields for overlays
-            if (overlay.formats().min() > 64 || overlay.formats().max() > 64) {
+            if (overlay.formats().max() > 64) {
                 writer.name("min_format");
-                writer.value(overlay.formats().min());
+                PackFormatSerializer.serializeMinFormat(overlay.formats().minVersion(), writer);
                 writer.name("max_format");
-                writer.value(overlay.formats().max());
+                PackFormatSerializer.serializeMaxFormat(overlay.formats().maxVersion(), writer);
             }
 
             writer.endObject();

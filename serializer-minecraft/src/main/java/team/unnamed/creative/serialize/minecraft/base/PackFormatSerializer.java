@@ -28,6 +28,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 import org.jetbrains.annotations.ApiStatus;
+import team.unnamed.creative.metadata.pack.FormatVersion;
 import team.unnamed.creative.metadata.pack.PackFormat;
 
 import java.io.IOException;
@@ -65,9 +66,26 @@ public final class PackFormatSerializer {
         }
     }
 
+    public static void serializeMinFormat(FormatVersion format, JsonWriter writer) throws IOException {
+        serializeVersion(format, writer, false);
+    }
+
+    public static void serializeMaxFormat(FormatVersion format, JsonWriter writer) throws IOException {
+        serializeVersion(format, writer, true);
+    }
+
     public static PackFormat deserialize(JsonElement el, int format) {
         PackFormat f = deserialize(el);
         return PackFormat.format(format, f.min(), f.max());
+    }
+
+    public static PackFormat deserializeNewFormat(JsonObject obj) {
+        final FormatVersion min = deserializeMinFormat(obj.get("min_format"));
+        final FormatVersion max = deserializeMaxFormat(obj.get("max_format"));
+        final FormatVersion format = obj.has("pack_format")
+                ? deserializeMinFormat(obj.get("pack_format"))
+                : min;
+        return PackFormat.format(format, min, max);
     }
 
     public static PackFormat deserialize(JsonElement el) {
@@ -90,6 +108,41 @@ public final class PackFormatSerializer {
             throw new IllegalStateException("Unsupported supported_formats type: " + el.getClass());
         }
         return PackFormat.format(min, min, max);
+    }
+
+    private static void serializeVersion(FormatVersion format, JsonWriter writer, boolean max) throws IOException {
+        if (format.minor() == 0 && !max) {
+            writer.value(format.major());
+            return;
+        }
+        if (format.minor() == Integer.MAX_VALUE && max) {
+            writer.value(format.major());
+            return;
+        }
+        writer.beginArray();
+        writer.value(format.major());
+        writer.value(format.minor());
+        writer.endArray();
+    }
+
+    private static FormatVersion deserializeMinFormat(JsonElement el) {
+        return deserializeFormatVersion(el, 0);
+    }
+
+    private static FormatVersion deserializeMaxFormat(JsonElement el) {
+        return deserializeFormatVersion(el, Integer.MAX_VALUE);
+    }
+
+    private static FormatVersion deserializeFormatVersion(JsonElement el, int defaultMinor) {
+        if (el.isJsonPrimitive()) {
+            return FormatVersion.of(el.getAsInt(), defaultMinor);
+        }
+        JsonArray arr = el.getAsJsonArray();
+        final int major = arr.get(0).getAsInt();
+        final int minor = arr.size() > 1
+                ? arr.get(1).getAsInt()
+                : defaultMinor;
+        return FormatVersion.of(major, minor);
     }
 
 }

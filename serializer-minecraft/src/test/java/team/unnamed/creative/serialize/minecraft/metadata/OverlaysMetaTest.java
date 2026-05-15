@@ -27,6 +27,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import team.unnamed.creative.metadata.overlays.OverlayEntry;
 import team.unnamed.creative.metadata.overlays.OverlaysMeta;
+import team.unnamed.creative.metadata.pack.FormatVersion;
 import team.unnamed.creative.metadata.pack.PackFormat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -81,6 +82,36 @@ class OverlaysMetaTest {
                         OverlayEntry.of(PackFormat.format(18, 18, 20), "v18-20"),
                         OverlayEntry.of(PackFormat.format(21, 21, 24), "v21-24")
                 ),
+                overlaysMeta
+        );
+    }
+
+    @Test
+    @DisplayName("Test overlays meta serialization with Minecraft Java 1.21.9 range")
+    void test_new_format_range_serialization() {
+        final OverlaysMeta overlaysMeta = OverlaysMeta.of(
+                OverlayEntry.of(PackFormat.format(
+                        FormatVersion.of(69),
+                        FormatVersion.of(69),
+                        FormatVersion.of(69, Integer.MAX_VALUE)
+                ), "v69")
+        );
+        assertEquals(
+                "{\"entries\":[{\"directory\":\"v69\",\"min_format\":69,\"max_format\":69}]}",
+                OverlaysMetaCodec.INSTANCE.toJson(overlaysMeta)
+        );
+    }
+
+    @Test
+    @DisplayName("Test overlays meta deserialization with Minecraft Java 1.21.9 range")
+    void test_new_format_range_deserialization() {
+        final OverlaysMeta overlaysMeta = OverlaysMetaCodec.INSTANCE.fromJson("{\"entries\":[{\"directory\":\"v69\",\"min_format\":69,\"max_format\":69}]}");
+        assertEquals(
+                OverlaysMeta.of(OverlayEntry.of(PackFormat.format(
+                        FormatVersion.of(69),
+                        FormatVersion.of(69),
+                        FormatVersion.of(69, Integer.MAX_VALUE)
+                ), "v69")),
                 overlaysMeta
         );
     }

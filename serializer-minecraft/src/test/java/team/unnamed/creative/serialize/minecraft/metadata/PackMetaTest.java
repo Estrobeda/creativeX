@@ -28,6 +28,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import team.unnamed.creative.metadata.pack.FormatVersion;
 import team.unnamed.creative.metadata.pack.PackFormat;
 import team.unnamed.creative.metadata.pack.PackMeta;
 
@@ -98,6 +99,36 @@ class PackMetaTest {
     }
 
     @Test
+    @DisplayName("Test Minecraft Java 26.x pack meta serialization")
+    void test_minecraft_java_26_serialization() {
+        PackMeta packMeta = PackMeta.of(
+                PackFormat.format(84),
+                Component.text("Minecraft Java 26.x")
+        );
+        assertEquals(
+                "{\"pack_format\":84,\"description\":\"Minecraft Java 26.x\",\"min_format\":84,\"max_format\":[84,0]}",
+                PackMetaCodec.INSTANCE.toJson(packMeta)
+        );
+    }
+
+    @Test
+    @DisplayName("Test Minecraft Java 1.21.9 pack meta serialization with minor format range")
+    void test_minecraft_java_1_21_9_minor_range_serialization() {
+        PackMeta packMeta = PackMeta.of(
+                PackFormat.format(
+                        FormatVersion.of(69),
+                        FormatVersion.of(69),
+                        FormatVersion.of(69, Integer.MAX_VALUE)
+                ),
+                Component.text("Minecraft Java 1.21.9")
+        );
+        assertEquals(
+                "{\"pack_format\":69,\"description\":\"Minecraft Java 1.21.9\",\"min_format\":69,\"max_format\":69}",
+                PackMetaCodec.INSTANCE.toJson(packMeta)
+        );
+    }
+
+    @Test
     @DisplayName("Test simple pack meta deserialization")
     void test_simple_deserialization() {
         PackMeta packMeta = PackMetaCodec.INSTANCE.fromJson("{\"pack_format\":7,\"description\":\"Description!\"}");
@@ -152,6 +183,23 @@ class PackMetaTest {
                                 .append(Component.text(" ftw ", NamedTextColor.GRAY))
                                 .append(Component.keybind("i.dont.know"))
                                 .build()
+                ),
+                packMeta
+        );
+    }
+
+    @Test
+    @DisplayName("Test Minecraft Java 1.21.9 pack meta deserialization")
+    void test_minecraft_java_1_21_9_deserialization() {
+        PackMeta packMeta = PackMetaCodec.INSTANCE.fromJson("{\"description\":\"Minecraft Java 1.21.9\",\"min_format\":69,\"max_format\":69}");
+        assertEquals(
+                PackMeta.of(
+                        PackFormat.format(
+                                FormatVersion.of(69),
+                                FormatVersion.of(69),
+                                FormatVersion.of(69, Integer.MAX_VALUE)
+                        ),
+                        Component.text("Minecraft Java 1.21.9")
                 ),
                 packMeta
         );

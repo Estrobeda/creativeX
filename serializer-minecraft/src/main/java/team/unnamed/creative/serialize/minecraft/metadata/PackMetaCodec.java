@@ -60,13 +60,15 @@ final class PackMetaCodec implements MetadataPartCodec<PackMeta> {
 
     @Override
     public @NotNull PackMeta read(final @NotNull JsonObject node) {
-        final int singleFormat = node.get("pack_format").getAsInt();
         final PackFormat format;
-        if (node.has("supported_formats")) { // since Minecraft 1.20.2 (pack format 18)
+        if (node.has("min_format") && node.has("max_format")) {
+            format = PackFormatSerializer.deserializeNewFormat(node);
+        } else if (node.has("supported_formats")) { // since Minecraft 1.20.2 (pack format 18)
+            final int singleFormat = node.get("pack_format").getAsInt();
             JsonElement el = node.get("supported_formats");
             format = PackFormatSerializer.deserialize(el, singleFormat);
         } else {
-            format = PackFormat.format(singleFormat);
+            format = PackFormat.format(node.get("pack_format").getAsInt());
         }
 
         final JsonElement descriptionNode = node.get("description");
@@ -82,8 +84,9 @@ final class PackMetaCodec implements MetadataPartCodec<PackMeta> {
 
     @Override
     public void write(final @NotNull JsonWriter writer, final @NotNull PackMeta pack) throws IOException {
+        final PackFormat formats = pack.formats();
         writer.beginObject()
-                .name("pack_format").value(pack.formats().format());
+                .name("pack_format").value(formats.format());
 
         writer.name("description");
         //noinspection deprecation
@@ -94,19 +97,19 @@ final class PackMetaCodec implements MetadataPartCodec<PackMeta> {
             Streams.write(GsonComponentSerializer.gson().serializeToTree(description), writer);
         }
 
-        if (!pack.formats().isSingle()) { // since Minecraft 1.20.2 (pack format 18)
+        if (formats.min() < 65 && !formats.isSingle()) { // since Minecraft 1.20.2 (pack format 18)
             // only write min and max values if not single
             // "supported_formats": [16, 17]
             writer.name("supported_formats");
-            PackFormatSerializer.serialize(pack.formats(), writer);
+            PackFormatSerializer.serialize(formats, writer);
         }
 
         // Formats higher than 64 are required to have min_format and max_format fields
-        if (pack.formats().min() > 64 || pack.formats().max() > 64) {
+        if (formats.max() > 64) {
             writer.name("min_format");
-            writer.value(pack.formats().min());
+            PackFormatSerializer.serializeMinFormat(formats.minVersion(), writer);
             writer.name("max_format");
-            writer.value(pack.formats().max());
+            PackFormatSerializer.serializeMaxFormat(formats.maxVersion(), writer);
         }
 
         writer.endObject();
